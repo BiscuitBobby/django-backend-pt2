@@ -1,3 +1,5 @@
+import traceback
+
 from django.shortcuts import render
 from django.http import HttpResponse
 from rest_framework import serializers
@@ -24,3 +26,16 @@ def getData(request):
         return Response(serializer.data)
     else:
         return request.META.get("Invalid token")
+
+@api_view(['POST'])
+def addUser(request):
+    serializer = UserSerializer(data=request.data)
+    #password = str(PasswordHasher.encode("password", salt))
+    try:
+        if serializer.is_valid():
+            serializer.save()
+            print(serializer)
+    except Exception as e:
+        traceback.print_exc()
+        print(serializer)
+    return Response(serializer.data)

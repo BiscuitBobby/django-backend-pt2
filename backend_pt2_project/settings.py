@@ -27,6 +27,7 @@ INSTALLED_APPS = [
     "django.contrib.messages",
     "django.contrib.staticfiles",
     'Backend_pt2_app.apps.BackendPt2Config',
+    'rest_framework',
 ]
 
 MIDDLEWARE = [

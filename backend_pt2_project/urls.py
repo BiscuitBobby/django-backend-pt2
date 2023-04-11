@@ -6,5 +6,6 @@ from Backend_pt2_app import views
 urlpatterns = [
     path("admin/", admin.site.urls),
     path('', views.index, name='index'),
-    path("users/", views.getData),
+    path("users/", views.getData, name='getData'),
+    path("add/", views.addUser, name='addData'),
 ]
