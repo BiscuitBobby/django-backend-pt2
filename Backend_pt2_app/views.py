@@ -1,5 +1,7 @@
 import traceback
 from django.http import HttpResponse
+from django.contrib.auth import authenticate
+from rest_framework.authtoken.models import Token
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import render
 from rest_framework import serializers
@@ -19,10 +21,16 @@ class UserSerializer(serializers.ModelSerializer):
 def index(request):
     return HttpResponse("welcome to the Index.")
 
-'''@login_required
-def my_protected_view(request):
-    return render(request, 'protected.html', {'current_user': request.user})
-'''
+@api_view(['POST'])
+def authenticate(request):
+    username = request.data.get('username')
+    password = request.data.get('password')
+    user = authenticate(username=username, password=password)
+    if user is None:
+        return Response({'error': 'Invalid credentials'})
+    token, _ = Token.objects.get_or_create(user=user)
+    return Response({'token': token.key})
+
 @api_view(['GET'])
 def getData(request):
     token = request.META.get('HTTP_TOKEN')
@@ -32,6 +40,7 @@ def getData(request):
         return Response(serializer.data)
     else:
         return request.META.get("Invalid token")
+
 
 @api_view(['POST'])
 def addUser(request):
@@ -52,3 +61,4 @@ def addUser(request):
         return Response(e)
 
     return Response(serializer.data)
+
