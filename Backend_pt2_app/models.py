@@ -1,8 +1,15 @@
 from django.contrib.auth.hashers import make_password
 from django.contrib.auth.models import AbstractBaseUser, BaseUserManager, PermissionsMixin, Group, Permission
 from django.db import models
+from django.contrib.gis.db import models as geomodels
 from . import salt
 from .encryption import PBKDF2WrappedSHA1PasswordHasher
+
+
+class Event(geomodels.Model):
+    name = geomodels.CharField(max_length=100)
+    event = geomodels.CharField(max_length=100)
+    location = geomodels.PointField()
 
 
 class ManageUser(BaseUserManager):
