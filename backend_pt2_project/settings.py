@@ -28,7 +28,6 @@ INSTALLED_APPS = [
     'Backend_pt2_app.apps.BackendPt2Config',
     'rest_framework',
     'rest_framework.authtoken',
-    'django.contrib.gis',
     'corsheaders',
 ]
 

@@ -9,5 +9,6 @@ urlpatterns = [
     path('', views.index, name='index'),
     path("users/", views.getData, name='getData'),
     path("add/", views.addUser, name='addData'),
+    path("loc/", views.nearEvents, name='location')
     # path('login/', views.login, name='api_token_auth'),
 ]
