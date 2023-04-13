@@ -26,7 +26,8 @@ def update_firebase_snapshot(location,
                              pswrd='password',
                              active=True,
                              event_name=None,
-                             event_description=None):
+                             event_description=None,
+                             event_type='food'):
     db = firestore.client()
     geopoint = firestore.GeoPoint(*location)
 
@@ -55,6 +56,7 @@ def update_firebase_snapshot(location,
                 'geohash': geohash_str,
                 'active': active,
                 'event_name': event_name,
-                'event_description': event_description
+                'event_description': event_description,
+                'tag': event_type
             })
     return 0

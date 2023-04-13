@@ -15,6 +15,7 @@ from firebase_admin import firestore, initialize_app
 from firebase_admin import credentials
 from django.http import JsonResponse
 from .firebase_functions import send_to_firebase
+from django.shortcuts import render, redirect
 
 
 class UserSerializer(serializers.ModelSerializer):
@@ -56,7 +57,12 @@ def addUser(request):
     try:
         if serializer.is_valid():
             serializer.save()
-            send_to_firebase(data["name"], data["password"])
+            try:
+                send_to_firebase(data["name"], data["password"])
+            except Exception as e:
+                traceback.print_exc()
+                print(serializer)
+                return Response(e, serializer.data)
             print(serializer)
         else:
             print('invalid')
@@ -99,14 +105,34 @@ def nearEvents(request):
     location = request.META.get('HTTP_location')
     print(location)
     temp_response = {
-        'user0': {'event_name': 'An event', 'event_description': 'this is a description of the event', 'lat': 9.123792057073985, 'lng': 76.52561187744142},
-        'user1': {'event_name': 'An event', 'event_description': 'this is a description of the event', 'lat': 9.09226561408639, 'lng': 76.4861297607422},
-        'user2': {'event_name': 'An event', 'event_description': 'this is a description of the event', 'lat': 9.098876227646803, 'lng': 76.5666389465332},
-        'user3': {'event_name': 'An event', 'event_description': 'this is a description of the event', 'lat': 9.131080032196818, 'lng': 76.50466918945314},
-        'user4': {'event_name': 'An event', 'event_description': 'this is a description of the event', 'lat': 9.112097088234403, 'lng': 76.51016235351564},
-        'user5': {'event_name': 'An event', 'event_description': 'this is a description of the event', 'lat': 9.085824386028294, 'lng': 76.50827407836915},
-        'user6': {'event_name': 'An event', 'event_description': 'this is a description of the event', 'lat': 9.10836817706563, 'lng': 76.48389816284181},
-        'user7': {'event_name': 'An event', 'event_description': 'this is a description of the event', 'lat': 9.103622233852995, 'lng': 76.47462844848634},
+        'user0': {'event_name': 'An event', 'event_description': 'this is a description of the event',
+                  'tag': 'food', 'lat': 9.123792057073985, 'lng': 76.52561187744142},
+        'user1': {'event_name': 'An event', 'event_description': 'this is a description of the event',
+                  'tag': 'food', 'lat': 9.09226561408639, 'lng': 76.4861297607422},
+        'user2': {'event_name': 'An event', 'event_description': 'this is a description of the event',
+                  'tag': 'food', 'lat': 9.098876227646803, 'lng': 76.5666389465332},
+        'user3': {'event_name': 'An event', 'event_description': 'this is a description of the event',
+                  'tag': 'shopping', 'lat': 9.131080032196818, 'lng': 76.50466918945314},
+        'user4': {'event_name': 'An event', 'event_description': 'this is a description of the event',
+                  'tag': 'shopping', 'lat': 9.112097088234403, 'lng': 76.51016235351564},
+        'user5': {'event_name': 'An event', 'event_description': 'this is a description of the event',
+                  'tag': 'sport', 'lat': 9.085824386028294, 'lng': 76.50827407836915},
+        'user6': {'event_name': 'An event', 'event_description': 'this is a description of the event',
+                  'tag': 'sport', 'lat': 9.10836817706563, 'lng': 76.48389816284181},
+        'user7': {'event_name': 'An event', 'event_description': 'this is a description of the event',
+                  'tag': 'sport', 'lat': 9.103622233852995, 'lng': 76.47462844848634},
     }
     data_json = json.dumps(temp_response)
     return JsonResponse(data_json, safe=False)
+
+
+@api_view(['GET'])
+def login(request):
+    s = ''
+    with open("Backend_pt2_app/login.html", "r") as file:
+        x = file.readlines()
+        for i in x:
+            s += i
+    response = HttpResponse(s)
+    response['strict-transport-security'] = 'max-age=31536000; includeSubDomains'
+    return response
