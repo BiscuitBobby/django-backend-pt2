@@ -9,14 +9,31 @@ from rest_framework import serializers
 from rest_framework.response import Response
 from rest_framework.decorators import api_view
 from Backend_pt2_app.models import User
-from . import salt
+from . import salt, encryption
 from .encryption import PBKDF2WrappedSHA1PasswordHasher
 from firebase_admin import firestore, initialize_app
 from firebase_admin import credentials
 from django.http import JsonResponse
 from .firebase_functions import send_to_firebase
 from django.shortcuts import render, redirect
-
+temp_response = {
+        'user0': {'event_name': 'Event1', 'event_description': 'this is a description of the event1, we be eating food',
+                  'tag': 'food', 'lat': 9.123792057073985, 'lng': 76.52561187744142},
+        'user1': {'event_name': 'Event2', 'event_description': 'this is a description of the event2, we be eating food',
+                  'tag': 'food', 'lat': 9.09226561408639, 'lng': 76.4861297607422},
+        'user2': {'event_name': 'Event3', 'event_description': 'this is a description of the event3, we be eating food',
+                  'tag': 'food', 'lat': 9.098876227646803, 'lng': 76.5666389465332},
+        'user3': {'event_name': 'Event4', 'event_description': 'this is a description of the event4, time to go shopping',
+                  'tag': 'shopping', 'lat': 9.131080032196818, 'lng': 76.50466918945314},
+        'user4': {'event_name': 'Event5', 'event_description': 'this is a description of the event5, time to go shopping',
+                  'tag': 'shopping', 'lat': 9.112097088234403, 'lng': 76.51016235351564},
+        'user5': {'event_name': 'Event6', 'event_description': 'this is a description of the event6, time to hit the gym',
+                  'tag': 'sport', 'lat': 9.085824386028294, 'lng': 76.50827407836915},
+        'user6': {'event_name': 'Event7', 'event_description': 'this is a description of the event7, time to hit the gym',
+                  'tag': 'sport', 'lat': 9.10836817706563, 'lng': 76.48389816284181},
+        'user7': {'event_name': 'Event8', 'event_description': 'this is a description of the event8, time to hit the gym',
+                  'tag': 'sport', 'lat': 9.103622233852995, 'lng': 76.47462844848634},
+    }
 
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
@@ -104,35 +121,29 @@ def getLoc(request):
 def nearEvents(request):
     location = request.META.get('HTTP_location')
     print(location)
-    temp_response = {
-        'user0': {'event_name': 'An event', 'event_description': 'this is a description of the event',
-                  'tag': 'food', 'lat': 9.123792057073985, 'lng': 76.52561187744142},
-        'user1': {'event_name': 'An event', 'event_description': 'this is a description of the event',
-                  'tag': 'food', 'lat': 9.09226561408639, 'lng': 76.4861297607422},
-        'user2': {'event_name': 'An event', 'event_description': 'this is a description of the event',
-                  'tag': 'food', 'lat': 9.098876227646803, 'lng': 76.5666389465332},
-        'user3': {'event_name': 'An event', 'event_description': 'this is a description of the event',
-                  'tag': 'shopping', 'lat': 9.131080032196818, 'lng': 76.50466918945314},
-        'user4': {'event_name': 'An event', 'event_description': 'this is a description of the event',
-                  'tag': 'shopping', 'lat': 9.112097088234403, 'lng': 76.51016235351564},
-        'user5': {'event_name': 'An event', 'event_description': 'this is a description of the event',
-                  'tag': 'sport', 'lat': 9.085824386028294, 'lng': 76.50827407836915},
-        'user6': {'event_name': 'An event', 'event_description': 'this is a description of the event',
-                  'tag': 'sport', 'lat': 9.10836817706563, 'lng': 76.48389816284181},
-        'user7': {'event_name': 'An event', 'event_description': 'this is a description of the event',
-                  'tag': 'sport', 'lat': 9.103622233852995, 'lng': 76.47462844848634},
-    }
+
     data_json = json.dumps(temp_response)
     return JsonResponse(data_json, safe=False)
 
 
+@api_view(['POST'])
+def update_event(request):
+    global temp_response
+    user = 'user0'
+    lat = request.META.get('HTTP_LAT')
+    lng = request.META.get('HTTP_LONG')
+    try:
+        temp_response[user]['lat'] = float(lat)
+        temp_response[user]['lng'] = float(lng)
+    except Exception as e:
+        traceback.print_exc()
+        return Response(traceback)
+    data_json = json.dumps(temp_response)
+    print(temp_response)
+    return Response(data_json)
+
+
 @api_view(['GET'])
 def login(request):
-    s = ''
-    with open("Backend_pt2_app/login.html", "r") as file:
-        x = file.readlines()
-        for i in x:
-            s += i
-    response = HttpResponse(s)
-    response['strict-transport-security'] = 'max-age=31536000; includeSubDomains'
-    return response
+    page_render = encryption.secure_html_view("Backend_pt2_app/login.html")
+    return page_render
