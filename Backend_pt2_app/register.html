@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Title</title>
+
+  <style>
+    html {
+      height: 100%;
+    }
+
+    body {
+      height: 100%;
+      margin: 0;
+      font-family: Arial, Helvetica, sans-serif;
+      display: grid;
+      justify-items: center;
+      align-items: center;
+      background-color: #3a3a3a;
+      color: lightgray;
+    }
+
+    #main-holder {
+      width: 100%;
+      height: 100%;
+      display: grid;
+      justify-items: center;
+      align-items: center;
+      background-color: #343541;
+      border-radius: 7px;
+      box-shadow: 0px 0px 5px 2px black;
+    }
+
+    #login-error-msg-holder {
+      width: 100%;
+      height: 100%;
+      display: grid;
+      justify-items: center;
+      align-items: center;
+    }
+
+    #login-error-msg {
+      width: 23%;
+      text-align: center;
+      margin: 0;
+      padding: 5px;
+      font-size: 12px;
+      font-weight: bold;
+      color: #8a0000;
+      border: 1px solid #8a0000;
+      background-color: #e58f8f;
+      opacity: 0;
+    }
+
+    #error-msg-second-line {
+      display: block;
+    }
+
+    #login-form {
+      align-self: flex-start;
+      display: grid;
+      justify-items: center;
+      align-items: center;
+      width: 40%;
+      height: 50%;
+    }
+
+    .login-form-field::placeholder {
+      color: white;
+      width: 100%;
+      height: 100%;
+      font-size: 100%;
+    }
+
+    .login-form-field {
+      border: none;
+      color: white;
+      background-color: #343541;
+      width: 100%;
+      border-bottom: 1px solid lightgrey;
+      margin-bottom: 10px;
+      border-radius: 3px;
+      outline: none;
+      padding: 0px 0px 5px 5px;
+    }
+
+    .button {
+      width: 100%;
+      border-radius: 25px;
+      height: 100%;
+    }
+  </style>
+</head>
+
+<body>
+  <main id="main-holder">
+    <h1 id="login-header">Login</h1>
+
+    <div id="login-error-msg-holder">
+      <p id="login-error-msg">Invalid username <span id="error-msg-second-line">and/or email</span></p>
+    </div>
+
+    <form id="login-form">
+      <input type="text" name="username" id="username-field" class="login-form-field" placeholder="Username">
+      <input type="password" name="password" id="password-field" class="login-form-field" placeholder="Password">
+      <input type="submit" value="Login" id="login-form-submit" class="button">
+        <a href="https://django.biscuitbobby.me/add/">register</a>
+    </form>
+
+  </main>
+
+  <script>
+  const loginForm = document.getElementById("login-form");
+const loginButton = document.getElementById("login-form-submit");
+const loginErrorMsg = document.getElementById("login-error-msg");
+
+function openPopup(boxText) {
+    const text = "registration successful";
+}
+
+loginForm.addEventListener("submit", async (event) => {
+    event.preventDefault();
+    const formData = new FormData(loginForm);
+    const email = formData.get('email');
+    const username = formData.get('username');
+    const password = formData.get('password');
+
+    try {
+        const response = await fetch("https://django.biscuitbobby.me/auth/", {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                "email": email,
+                "username": username,
+                "password": password
+            })
+        });
+
+        const data = await response.json();
+        if ("error" in data) {
+            loginErrorMsg.style.opacity = 1;
+        } else {
+            openPopup(data["token"]);
+            loginErrorMsg.style.opacity = 0;
+            alert("auth token:\n"+data["token"]);
+        }
+    } catch (error) {
+        loginErrorMsg.style.opacity = 1;
+    }
+});
+
+</script>

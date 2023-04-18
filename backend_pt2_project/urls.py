@@ -12,5 +12,6 @@ urlpatterns = [
     path("add/", views.addUser, name='addData'),
     path("loc/", views.nearEvents, name='location'),
     path("login/", views.login, name='login'),
-    path("eventupdate/", views.update_event, name='eventupdate')
+    path("eventupdate/", views.update_event, name='eventupdate'),
+    path("auth/", views.auth, name='auth')
 ]

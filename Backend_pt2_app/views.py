@@ -16,24 +16,11 @@ from firebase_admin import credentials
 from django.http import JsonResponse
 from .firebase_functions import send_to_firebase
 from django.shortcuts import render, redirect
-temp_response = {
-        'user0': {'event_name': 'Event1', 'event_description': 'this is a description of the event1, we be eating food',
-                  'tag': 'food', 'lat': 9.123792057073985, 'lng': 76.52561187744142},
-        'user1': {'event_name': 'Event2', 'event_description': 'this is a description of the event2, we be eating food',
-                  'tag': 'food', 'lat': 9.09226561408639, 'lng': 76.4861297607422},
-        'user2': {'event_name': 'Event3', 'event_description': 'this is a description of the event3, we be eating food',
-                  'tag': 'food', 'lat': 9.098876227646803, 'lng': 76.5666389465332},
-        'user3': {'event_name': 'Event4', 'event_description': 'this is a description of the event4, time to go shopping',
-                  'tag': 'shopping', 'lat': 9.131080032196818, 'lng': 76.50466918945314},
-        'user4': {'event_name': 'Event5', 'event_description': 'this is a description of the event5, time to go shopping',
-                  'tag': 'shopping', 'lat': 9.112097088234403, 'lng': 76.51016235351564},
-        'user5': {'event_name': 'Event6', 'event_description': 'this is a description of the event6, time to hit the gym',
-                  'tag': 'sport', 'lat': 9.085824386028294, 'lng': 76.50827407836915},
-        'user6': {'event_name': 'Event7', 'event_description': 'this is a description of the event7, time to hit the gym',
-                  'tag': 'sport', 'lat': 9.10836817706563, 'lng': 76.48389816284181},
-        'user7': {'event_name': 'Event8', 'event_description': 'this is a description of the event8, time to hit the gym',
-                  'tag': 'sport', 'lat': 9.103622233852995, 'lng': 76.47462844848634},
-    }
+
+with open('Backend_pt2_app/temp.json', 'r') as file:
+    # Load the JSON data into a dictionary
+    temp_response = json.load(file)
+    print(temp_response)
 
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
@@ -45,7 +32,7 @@ def index(request):
     return HttpResponse("welcome to the Index.")
 
 @api_view(['POST'])
-def authenticate(request):
+def auth(request):
     username = request.data.get('username')
     password = request.data.get('password')
     user = authenticate(username=username, password=password)
@@ -119,6 +106,7 @@ def getLoc(request):
 
 @api_view(['GET'])
 def nearEvents(request):
+    global temp_response
     location = request.META.get('HTTP_location')
     print(location)
 
@@ -129,19 +117,32 @@ def nearEvents(request):
 @api_view(['POST'])
 def update_event(request):
     global temp_response
-    user = 'user0'
+    token = request.META.get('HTTP_TOKEN')
+    username = request.META.get('HTTP_USERNAME')
+    print('user:', username)
+    tag = request.META.get('HTTP_TYPE')
+    print('tag:', tag)
+    eventdetails = request.META.get('HTTP_EVENTDETAILS')
+    eventname = request.META.get('HTTP_EVENTNAME')
+    print('eventname:', eventname, "\n", 'eventdetails:', eventdetails)
     lat = request.META.get('HTTP_LAT')
-    lng = request.META.get('HTTP_LONG')
+    long = request.META.get('HTTP_LONG')
+    print(f'{username}\n{token}:\n', str((Token.objects.get(key=token)).user).strip())
     try:
-        temp_response[user]['lat'] = float(lat)
-        temp_response[user]['lng'] = float(lng)
+        user = str((Token.objects.get(key=token)).user).strip()
+        if username == user:
+            print('it works\n\n\n')
+            temp_response[user] = {'event_name': eventname, 'event_description': eventdetails,
+                                         'tag': tag, 'lat': lat, 'lng': long}
+            with open('Backend_pt2_app/temp.json', 'w') as file:
+                # Write the updated JSON data to the file
+                json.dump(temp_response, file)
     except Exception as e:
         traceback.print_exc()
         return Response(traceback)
     data_json = json.dumps(temp_response)
-    print(temp_response)
+    print('debug:', temp_response)
     return Response(data_json)
-
 
 @api_view(['GET'])
 def login(request):
