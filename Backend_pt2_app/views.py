@@ -119,19 +119,14 @@ def update_event(request):
     global temp_response
     token = request.META.get('HTTP_TOKEN')
     username = request.META.get('HTTP_USERNAME')
-    print('user:', username)
     tag = request.META.get('HTTP_TYPE')
-    print('tag:', tag)
     eventdetails = request.META.get('HTTP_EVENTDETAILS')
     eventname = request.META.get('HTTP_EVENTNAME')
-    print('eventname:', eventname, "\n", 'eventdetails:', eventdetails)
     lat = request.META.get('HTTP_LAT')
     long = request.META.get('HTTP_LONG')
-    print(f'{username}\n{token}:\n', str((Token.objects.get(key=token)).user).strip())
     try:
         user = str((Token.objects.get(key=token)).user).strip()
         if username == user:
-            print('it works\n\n\n')
             temp_response[user] = {'event_name': eventname, 'event_description': eventdetails,
                                          'tag': tag, 'lat': lat, 'lng': long}
             with open('Backend_pt2_app/temp.json', 'w') as file:
@@ -141,7 +136,6 @@ def update_event(request):
         traceback.print_exc()
         return Response(traceback)
     data_json = json.dumps(temp_response)
-    print('debug:', temp_response)
     return Response(data_json)
 
 @api_view(['GET'])
