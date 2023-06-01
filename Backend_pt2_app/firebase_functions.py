@@ -1,62 +1,86 @@
+import json
+
 import geohash
 from firebase_admin import firestore, credentials, initialize_app
+from google.cloud import firestore as geofirestore
 from uuid import uuid4
 
+
 cred = credentials.Certificate("Backend_pt2_app/admin-sdk.json")
-__all__ = ['send_to_firebase', 'update_firebase_snapshot']
+__all__ = ['update_firebase_snapshot', ]
 initialize_app(cred)
 
-def send_to_firebase(user=str(uuid4()), location=None, active=False):
-    if location is None:
-        location = [0, 0]
-    db = firestore.client()
-    data = {'user': user}
-    
-    locations_ref = db.collection('data')
-    query = locations_ref.where('user', '==', user)
-    docs = query.get()
-    if len(docs) < 1:
-        db.collection('data').document(user).create(data)
-    update_firebase_snapshot(location, user, 'password', active)
-    return 0
-
+db = firestore.client()
 
 def update_firebase_snapshot(location,
                              user='test1',
-                             pswrd='password',
                              active=True,
                              event_name=None,
                              event_description=None,
                              event_type='food'):
-    db = firestore.client()
-    geopoint = firestore.GeoPoint(*location)
+    ###################################################
 
-    # Encode the geopoint with geohash
-    geohash_str = geohash.encode(*location)
 
-    locations_ref = db.collection('data')
+    doc_ref = db.collection('data').document(user)
 
-    query = locations_ref.where('user', '==', user)
-    docs = query.get()
-    if active == False:  # delete document if false
-        doc_ref = db.collection('geopoints').document(user)
-        doc_ref.delete()
-        print(f"deleted {user}'s event")
-    else:
-        for doc in docs:
-            print(f'Document ID: {doc.id}')
-            print(f'pass: {doc.to_dict()["password"]}')
+    data = {
+        "user": user,
+        "location": geofirestore.GeoPoint(float(location[0]), float(location[1])),
+        'active': active,
+        'event_name': event_name,
+        'event_description': event_description,
+        'tag': event_type
+    }
 
-        if pswrd == doc.to_dict()["password"]:
-            # Add the geopoint to Firestore
-            doc_ref = db.collection('geopoints').document(user)
-            doc_ref.set({
-                'name': user,
-                'geopoint': geopoint,
-                'geohash': geohash_str,
-                'active': active,
-                'event_name': event_name,
-                'event_description': event_description,
-                'tag': event_type
-            })
+    doc_ref.set(data)
+
+    print("Location data stored")
+    ###########################################
     return 0
+
+
+from firebase_admin import firestore
+
+def get_all_geopoints(collection_name='data'):
+
+    # Retrieve all documents from the collection
+    collection_ref = db.collection(collection_name)
+    documents = collection_ref.get()
+
+    geopoints = []
+    nearest = []
+
+    # Process each document and extract GeoPoints
+    for document in documents:
+        doc_data = document.to_dict()
+        location = doc_data.get('location')
+        temp = dict()
+        if location and isinstance(location, geofirestore.GeoPoint):
+            geopoints.append(location)
+            doc_data['password'] = 'nice try'
+            nearest.append(doc_data)
+    for i in range(len(nearest)):
+        lat = nearest[i]['location'].latitude
+        lng = nearest[i]['location'].longitude
+        nearest[i]['lat'] = lat
+        nearest[i]['lng'] = lng
+        del nearest[i]['location']
+        print('---')
+
+    responce = dict()
+    for i in nearest:
+        responce[i['user']] = i
+        del responce[i['user']]['user']
+    print(responce)
+
+    print(responce)
+
+    return responce
+
+def migrate_dummy_dat(x):
+        for i in x:
+            print(i, "-", x[i])
+            update_firebase_snapshot([x[i]['lat'], x[i]['lng']], i, True, x[i]['event_name'], x[i]['event_description'],
+                                     x[i]['tag'])
+            print([x[i]['lat'], x[i]['lng']], i, True, x[i]['event_name'], x[i]['event_description'],
+                                     x[i]['tag'])

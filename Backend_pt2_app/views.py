@@ -11,10 +11,8 @@ from rest_framework.decorators import api_view
 from Backend_pt2_app.models import User
 from . import salt, encryption
 from .encryption import PBKDF2WrappedSHA1PasswordHasher
-from firebase_admin import firestore, initialize_app
-from firebase_admin import credentials
 from django.http import JsonResponse
-from .firebase_functions import send_to_firebase
+from .firebase_functions import update_firebase_snapshot, get_all_geopoints, migrate_dummy_dat
 from django.shortcuts import render, redirect
 
 with open('Backend_pt2_app/temp.json', 'r') as file:
@@ -61,12 +59,6 @@ def addUser(request):
     try:
         if serializer.is_valid():
             serializer.save()
-            try:
-                send_to_firebase(data["name"], data["password"])
-            except Exception as e:
-                traceback.print_exc()
-                print(serializer)
-                return Response(e, serializer.data)
             print(serializer)
         else:
             print('invalid')
@@ -110,7 +102,7 @@ def nearEvents(request):
     location = request.META.get('HTTP_location')
     print(location)
 
-    data_json = json.dumps(temp_response)
+    data_json = get_all_geopoints()
     return JsonResponse(data_json, safe=False)
 
 
@@ -124,14 +116,19 @@ def update_event(request):
     eventname = request.META.get('HTTP_EVENTNAME')
     lat = request.META.get('HTTP_LAT')
     long = request.META.get('HTTP_LONG')
+    #print(request.META)
+    # migrate_dummy_dat(temp_response)
     try:
         user = str((Token.objects.get(key=token)).user).strip()
         if username == user:
             temp_response[user] = {'event_name': eventname, 'event_description': eventdetails,
                                          'tag': tag, 'lat': lat, 'lng': long}
+            print(temp_response[user])
             with open('Backend_pt2_app/temp.json', 'w') as file:
                 # Write the updated JSON data to the file
                 json.dump(temp_response, file)
+                update_firebase_snapshot([lat, long], user, True, eventname, eventdetails)
+                get_all_geopoints('data')
     except Exception as e:
         traceback.print_exc()
         return Response(traceback)
