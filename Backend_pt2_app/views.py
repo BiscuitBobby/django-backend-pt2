@@ -3,17 +3,15 @@ import traceback
 from django.http import HttpResponse
 from django.contrib.auth import authenticate
 from rest_framework.authtoken.models import Token
-from django.contrib.auth.decorators import login_required
-from django.shortcuts import render
 from rest_framework import serializers
 from rest_framework.response import Response
 from rest_framework.decorators import api_view
 from Backend_pt2_app.models import User
-from . import salt, encryption
+from . import salt
 from .encryption import PBKDF2WrappedSHA1PasswordHasher
 from django.http import JsonResponse
-from .firebase_functions import update_firebase_snapshot, get_all_geopoints, migrate_dummy_dat
-from django.shortcuts import render, redirect
+from .firebase_functions import update_firebase_snapshot, get_all_geopoints
+
 
 with open('Backend_pt2_app/temp.json', 'r') as file:
     # Load the JSON data into a dictionary
@@ -71,31 +69,6 @@ def addUser(request):
     return Response(serializer.data)
 
 
-'''@api_view(['GET'])
-def getLoc(request):
-    user = request.META.get('HTTP_USER')
-    db = firestore.client()
-    ans = dict()
-    for i in ['geopoints']:
-        notifications_ref = db.collection(i)
-        query = notifications_ref.where('user', '==', user)
-        docs = query.get()
-        for doc in docs:
-            print(f'Document ID: {doc.id}')
-            data = doc.to_dict()
-            print(f'Document data: {doc.to_dict()}')
-            if 'geopoint' in data:
-                data['geopoint'] = {
-                    'latitude': data['geopoint'].latitude,
-                    'longitude': data['geopoint'].longitude,
-                }
-            ans.update(data)
-        print(data['geopoint'])
-        print(ans)
-    data_json = json.dumps(ans)
-    return JsonResponse(data_json, safe=False)'''
-
-
 @api_view(['GET'])
 def nearEvents(request):
     global temp_response
@@ -135,7 +108,16 @@ def update_event(request):
     data_json = json.dumps(temp_response)
     return Response(data_json)
 
-@api_view(['GET'])
-def login(request):
-    page_render = encryption.secure_html_view("Backend_pt2_app/login.html")
-    return page_render
+
+@api_view(['POST'])
+def register(request):
+    data = json.loads(request.body)
+    email = data['email']
+    username = data['username']
+    pswrd = data['password']
+
+    print(username, email)
+    user = User.objects.create_user(email=email, password=pswrd, username=username)
+    user.save()
+    print('created user: '+username)
+    return Response("created user")

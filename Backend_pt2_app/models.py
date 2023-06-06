@@ -2,23 +2,18 @@ from django.contrib.auth.models import AbstractBaseUser, BaseUserManager, Permis
 from django.db import models
 # from django.contrib.gis.db import models as geomodels
 
-'''class Event(geomodels.Model):
-    name = geomodels.CharField(max_length=100)
-    event = geomodels.CharField(max_length=100)
-    location = geomodels.PointField()
-'''
-
 class ManageUser(BaseUserManager):
-    def create_user(self, email, password=None, **extra_fields):
-        user = self.model(email=self.normalize_email(email)**extra_fields)
+    def create_user(self, email, password=None, username=None, **extra_fields):
+        user = self.model(email=self.normalize_email(email), **extra_fields)
         '''password_hasher = PBKDF2WrappedSHA1PasswordHasher()
         user.set_password(password_hasher.encode(password, salt.salt))'''
+        user.username = username
         user.set_password(password)
         user.save(using=self._db)
         return user
-    def create_su(self, email, password=None, **extra_fields):
+    def create_su(self, email, password=None, username=None, **extra_fields):
         extra_fields.setdefault('is_superuser', True)
-        return self.create_user(email, password, **extra_fields)
+        return self.create_user(email, password, username=username, **extra_fields)
 
 
 class User(AbstractBaseUser, PermissionsMixin):
@@ -32,6 +27,7 @@ class User(AbstractBaseUser, PermissionsMixin):
     user_permissions = models.ManyToManyField(Permission, blank=True, related_name='user_permissions')
 
     objects = ManageUser()
+    USERNAME_FIELD = 'username'
 
     def __str__(self):
         return self.email
