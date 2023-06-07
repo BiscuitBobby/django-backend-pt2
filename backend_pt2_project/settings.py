@@ -126,7 +126,8 @@ CORS_ALLOW_HEADERS = [
     'type',
     'username',
     'Access-Control-Allow-Origin',
-    'radius'
+    'radius',
+    'expiry'
 ]
 
 CSRF_TRUSTED_ORIGINS = ['https://django.biscuitbobby.me', 'https://react.biscuitbobby.me']

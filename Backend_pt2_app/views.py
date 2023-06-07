@@ -89,6 +89,7 @@ def update_event(request):
     eventname = request.META.get('HTTP_EVENTNAME')
     lat = request.META.get('HTTP_LAT')
     long = request.META.get('HTTP_LONG')
+    expiry = request.META.get('HTTP_EXPIRY')
     #print(request.META)
     # migrate_dummy_dat(temp_response)
     try:
@@ -100,7 +101,7 @@ def update_event(request):
             with open('Backend_pt2_app/temp.json', 'w') as file:
                 # Write the updated JSON data to the file
                 json.dump(temp_response, file)
-                update_firebase_snapshot([lat, long], user, True, eventname, eventdetails)
+                update_firebase_snapshot([lat, long], user, True, eventname, eventdetails, tag, expiry)
                 get_all_geopoints('data')
     except Exception as e:
         traceback.print_exc()
