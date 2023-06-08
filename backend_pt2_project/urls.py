@@ -12,5 +12,7 @@ urlpatterns = [
     path("loc/", views.nearEvents, name='location'),
     path("eventupdate/", views.update_event, name='eventupdate'),
     path("auth/", views.auth, name='auth'),
-    path("register/", views.register, name='register')
+    path("register/", views.register, name='register'),
+    path("join/", views.event_join, name='join'),
+    path("leave/", views.leave_event, name='leave')
 ]

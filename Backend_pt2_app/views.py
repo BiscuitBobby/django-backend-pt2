@@ -10,8 +10,7 @@ from Backend_pt2_app.models import User
 from . import salt
 from .encryption import PBKDF2WrappedSHA1PasswordHasher
 from django.http import JsonResponse
-from .firebase_functions import update_firebase_snapshot, get_all_geopoints
-
+from .firebase_functions import update_firebase_snapshot, get_all_geopoints, join_event, leave_event
 
 with open('Backend_pt2_app/temp.json', 'r') as file:
     # Load the JSON data into a dictionary
@@ -89,25 +88,68 @@ def update_event(request):
     eventname = request.META.get('HTTP_EVENTNAME')
     lat = request.META.get('HTTP_LAT')
     long = request.META.get('HTTP_LONG')
-    expiry = request.META.get('HTTP_EXPIRY')
+    try:
+        expiry = float(request.META.get('HTTP_EXPIRY'))
+        print('expiry:', expiry)
+    except:
+        print('couldnt find expiry')
+        expiry = 1
     #print(request.META)
     # migrate_dummy_dat(temp_response)
     try:
-        user = str((Token.objects.get(key=token)).user).strip()
+        token_obj = Token.objects.get(key=token)  # Retrieve the Token object using the provided token
+        obj = token_obj.user  # Get the User object associated with the token
+        user = obj.username
+        print('generated token')
+        print(user,'---',username)
         if username == user:
-            temp_response[user] = {'event_name': eventname, 'event_description': eventdetails,
-                                         'tag': tag, 'lat': lat, 'lng': long}
-            print(temp_response[user])
-            with open('Backend_pt2_app/temp.json', 'w') as file:
-                # Write the updated JSON data to the file
-                json.dump(temp_response, file)
-                update_firebase_snapshot([lat, long], user, True, eventname, eventdetails, tag, expiry)
-                get_all_geopoints('data')
+            update_firebase_snapshot([lat, long], user, True, eventname, eventdetails, tag, expiry)
+            print('sdvasdvad')
+            get_all_geopoints('data')
+            print('sdvasdvad')
+        else:
+            print('invalid user')
     except Exception as e:
-        traceback.print_exc()
-        return Response(traceback)
+        traceback_str = traceback.format_exc()  # Get the traceback as a string
+        print(traceback_str)  # Optional: Print the traceback for debugging
+        return Response(traceback_str)
     data_json = json.dumps(temp_response)
     return Response(data_json)
+
+
+@api_view(['POST'])
+def event_join(request):
+    data = json.loads(request.body)
+    token = data['token']
+    username = data['username']
+    eventid = data['eventid']
+    try:
+        token_obj = Token.objects.get(key=token)
+        obj = token_obj.user
+        user = obj.username
+        if username == user:
+            join_event(eventid)
+            return Response({"joined user"})
+    except:
+        print('auth failure')
+        return Response({"failed to join"})
+
+    @api_view(['POST'])
+    def event_leave(request):
+        data = json.loads(request.body)
+        token = data['token']
+        username = data['username']
+        eventid = data['eventid']
+        try:
+            token_obj = Token.objects.get(key=token)
+            obj = token_obj.user
+            user = obj.username
+            if username == user:
+                leave_event(eventid)
+                return Response({"user left"})
+        except:
+            print('auth failure')
+            return Response({"failed to leave"})
 
 
 @api_view(['POST'])
